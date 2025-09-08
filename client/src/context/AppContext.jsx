@@ -13,7 +13,7 @@ export const AppContextProvider = ({ children }) => {
     const [selectedChat, setSelectedChat] = useState(null);
 
     const fetchUser = async () => {
-        setUser(dummyUserData)
+        // setUser(dummyUserData)
     }
 
     const fetchUserChats = async () => {

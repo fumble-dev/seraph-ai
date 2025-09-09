@@ -3,6 +3,7 @@ import cors from 'cors'
 import 'dotenv/config'
 import connectDb from './configs/db.js';
 import userRouter from './routes/userRoutes.js';
+import chatRouter from './routes/chatRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,6 +20,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/api/user', userRouter);
+app.use('/api/chat', chatRouter)
 
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`)

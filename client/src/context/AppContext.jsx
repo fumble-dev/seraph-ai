@@ -8,12 +8,14 @@ export const AppContextProvider = ({ children }) => {
 
     const navigate = useNavigate();
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
     const [user, setUser] = useState(null);
     const [chats, setChats] = useState([]);
     const [selectedChat, setSelectedChat] = useState(null);
 
     const fetchUser = async () => {
-        // setUser(dummyUserData)
+        setUser(dummyUserData)
     }
 
     const fetchUserChats = async () => {
@@ -39,6 +41,7 @@ export const AppContextProvider = ({ children }) => {
         user, setUser,
         chats, setChats,
         selectedChat, setSelectedChat,
+        backendUrl
     }
 
     return (

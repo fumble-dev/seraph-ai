@@ -1,6 +1,7 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import Chat from "../models/chat.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'iloveyou';
 
@@ -39,7 +40,7 @@ export const registerUser = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            token:token
+            token: token
         });
     } catch (error) {
         console.error(error);
@@ -109,3 +110,37 @@ export const getUser = async (req, res) => {
         });
     }
 }
+
+export const getPublishedImages = async (req, res) => {
+  try {
+    const publishedImageMessages = await Chat.aggregate([
+      { $unwind: "$messages" },
+      {
+        $match: {
+          "messages.isImage": true,
+          "messages.isPublished": true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          imageUrl: "$messages.content",
+          username: "$username",
+          timestamp: "$messages.timestamp",
+        },
+      },
+      { $sort: { timestamp: -1 } }, // newest first
+    ]);
+
+    res.json({
+      success: true,
+      images: publishedImageMessages,
+    });
+  } catch (error) {
+    console.error("Error in getPublishedImages:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+};

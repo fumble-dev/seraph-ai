@@ -88,7 +88,6 @@ export const imageMessageController = async (req, res) => {
       });
     }
 
-    // Add user prompt message
     chat.messages.push({
       role: "user",
       content: prompt,
@@ -96,14 +95,12 @@ export const imageMessageController = async (req, res) => {
       isImage: false,
     });
 
-    // Generate image via ImageKit AI
     const encodedPrompt = encodeURIComponent(prompt);
     const generatedImageUrl = `${process.env.IMAGEKIT_URL_ENDPOINT}/ik-genimg-prompt-${encodedPrompt}/seraphai/${Date.now()}.png?tr=w-800,h-800`;
 
     const aiImageResponse = await axios.get(generatedImageUrl, { responseType: "arraybuffer" });
     const base64Image = `data:image/png;base64,${Buffer.from(aiImageResponse.data, "binary").toString("base64")}`;
 
-    // Upload to ImageKit storage
     const uploadResponse = await imagekit.upload({
       file: base64Image,
       fileName: `${Date.now()}.png`,

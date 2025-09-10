@@ -1,11 +1,12 @@
 import razorpay from "../configs/razorpay.js";
 import Transaction from "../models/transaction.js";
+import User from "../models/user.js";
 
 const plans = [
     {
         id: "basic",
         name: "Basic",
-        price: 10,
+        price: 1000,
         credits: 100,
         features: [
             "100 text generations",
@@ -17,7 +18,7 @@ const plans = [
     {
         id: "pro",
         name: "Pro",
-        price: 20,
+        price: 2000,
         credits: 500,
         features: [
             "500 text generations",
@@ -30,7 +31,7 @@ const plans = [
     {
         id: "premium",
         name: "Premium",
-        price: 30,
+        price: 3000,
         credits: 1000,
         features: [
             "1000 text generations",
@@ -114,24 +115,33 @@ export const verifyPurchase = async (req, res) => {
 
         const orderInfo = await razorpay.orders.fetch(razorpay_order_id);
 
-        if (orderInfo.status === 'paid') {
-            await Transaction.findOneAndUpdate(
-                { _id: orderInfo.receipt },
-                { isPaid: true }
-            );
+        if (orderInfo.status === "paid") {
+            const transaction = await Transaction.findById(orderInfo.receipt);
+
+            if (!transaction) {
+                return res.status(404).json({ success: false, message: "Transaction not found" });
+            }
+
+            if (transaction.isPaid) {
+                return res.json({ success: true, message: "Payment already verified" });
+            }
+
+            transaction.isPaid = true;
+            await transaction.save();
+
+            await User.findByIdAndUpdate(transaction.userId, { $inc: { credits: transaction.credits } });
+
             return res.json({
                 success: true,
                 message: "Payment Successful.",
-                order: orderInfo
+                order: orderInfo,
             });
         } else {
             return res.json({
                 success: false,
-                message: "Payment Failed."
-            })
+                message: "Payment Failed.",
+            });
         }
-
-
     } catch (error) {
         console.error("verifyPurchase error:", error);
         res.status(500).json({

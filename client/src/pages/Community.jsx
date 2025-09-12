@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from 'react'
-import { dummyPublishedImages } from '../assets/assets';
 import Loading from './Loading';
+import { useAppContext } from '../context/AppContext';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const Community = () => {
 
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const { backendUrl } = useAppContext()
+
   const fetchImages = async () => {
-    setImages(dummyPublishedImages);
-    setLoading(false);
+    try {
+      const { data } = await axios.get(backendUrl + '/api/user/published-images')
+      if (data.success) {
+        setImages(data.images)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -35,7 +48,7 @@ const Community = () => {
             }
           </div>
         ) : (
-          <p className=''>No images Available</p>
+          <p className='text-xl text-white text-center py-50'>No images Available</p>
         )
       }
     </div>

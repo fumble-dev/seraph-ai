@@ -1,14 +1,40 @@
 import React from 'react'
+import axios from 'axios';
+import { useAppContext } from '../context/AppContext';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [state, setState] = React.useState("login");
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+
+  const { backendUrl, setToken } = useAppContext();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  }
+    setLoading(true);
+
+    const url = state === 'login' ? '/api/user/login' : '/api/user/register';
+    const payload = state === "login"
+      ? { email, password }
+      : { name, email, password };
+
+    try {
+      const { data } = await axios.post(backendUrl + url, payload);
+
+      if (data.success) {
+        setToken(data.token);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <form
@@ -16,13 +42,12 @@ const Login = () => {
       className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-[352px] 
         text-gray-200 rounded-lg shadow-xl border border-gray-800 bg-gray-900"
     >
-      {/* Title */}
       <p className="text-2xl font-medium m-auto">
         <span className="text-purple-400">User</span>{" "}
         {state === "login" ? "Login" : "Sign Up"}
       </p>
 
-      {/* Name (only register) */}
+      {/* Name */}
       {state === "register" && (
         <div className="w-full">
           <p className="text-sm text-gray-400">Name</p>
@@ -69,7 +94,7 @@ const Login = () => {
         />
       </div>
 
-      {/* Toggle login/register */}
+      {/* login/register */}
       {state === "register" ? (
         <p className="text-sm text-gray-400">
           Already have an account?{" "}
@@ -92,13 +117,21 @@ const Login = () => {
         </p>
       )}
 
-      {/* Submit Button */}
+      {/* Submit */}
       <button
-      type='submit'
-        className="bg-purple-500 hover:bg-purple-600 transition-all 
-          text-white w-full py-2 rounded-md cursor-pointer shadow-md"
+        type="submit"
+        disabled={loading}
+        className={`bg-purple-500 hover:bg-purple-600 transition-all 
+          text-white w-full py-2 rounded-md cursor-pointer shadow-md 
+          ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
       >
-        {state === "register" ? "Create Account" : "Login"}
+        {loading
+          ? state === "login" 
+            ? "Logging in..." 
+            : "Creating Account..."
+          : state === "login" 
+            ? "Login" 
+            : "Create Account"}
       </button>
     </form>
   );

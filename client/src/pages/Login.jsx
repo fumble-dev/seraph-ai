@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 const Login = () => {
   const [state, setState] = React.useState("login");
-  const [name, setName] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -17,9 +17,11 @@ const Login = () => {
     setLoading(true);
 
     const url = state === 'login' ? '/api/user/login' : '/api/user/register';
+
+    // FIXED: backend expects username, not name
     const payload = state === "login"
       ? { email, password }
-      : { name, email, password };
+      : { username, email, password };
 
     try {
       const { data } = await axios.post(backendUrl + url, payload);
@@ -47,13 +49,13 @@ const Login = () => {
         {state === "login" ? "Login" : "Sign Up"}
       </p>
 
-      {/* Name */}
+      {/* Username */}
       {state === "register" && (
         <div className="w-full">
-          <p className="text-sm text-gray-400">Name</p>
+          <p className="text-sm text-gray-400">Username</p>
           <input
-            onChange={(e) => setName(e.target.value)}
-            value={name}
+            onChange={(e) => setUsername(e.target.value)}
+            value={username}
             placeholder="Type here"
             className="border border-gray-700 rounded w-full p-2 mt-1 
               bg-gray-800 text-gray-200 placeholder-gray-500
@@ -94,7 +96,7 @@ const Login = () => {
         />
       </div>
 
-      {/* login/register */}
+      {/* Toggle login/register */}
       {state === "register" ? (
         <p className="text-sm text-gray-400">
           Already have an account?{" "}

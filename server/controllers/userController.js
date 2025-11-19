@@ -9,13 +9,15 @@ export const registerUser = async (req, res) => {
     try {
         const { email, username, password } = req.body;
 
+        // Check if username, email, and password are provided
         if (!username || !email || !password) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide username, email and password.",
+                message: "Please provide username, email, and password.",
             });
         }
 
+        // Check if the user already exists
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({
@@ -24,6 +26,7 @@ export const registerUser = async (req, res) => {
             });
         }
 
+        // Hash the password before saving
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -32,15 +35,18 @@ export const registerUser = async (req, res) => {
             email,
             password: hashedPassword,
         });
+
+        // Save the new user to the database
         await newUser.save();
 
+        // Generate a JWT token
         const token = jwt.sign({ id: newUser._id }, JWT_SECRET, {
             expiresIn: "7d",
         });
 
         return res.status(201).json({
             success: true,
-            token: token
+            token: token,
         });
     } catch (error) {
         console.error(error);
@@ -55,6 +61,7 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Check if email and password are provided
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -62,6 +69,7 @@ export const loginUser = async (req, res) => {
             });
         }
 
+        // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({
@@ -70,6 +78,7 @@ export const loginUser = async (req, res) => {
             });
         }
 
+        // Compare the password with the hashed password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({
@@ -78,13 +87,14 @@ export const loginUser = async (req, res) => {
             });
         }
 
+        // Generate a JWT token
         const token = jwt.sign({ id: user._id }, JWT_SECRET, {
             expiresIn: "7d",
         });
 
         return res.status(200).json({
             success: true,
-            token: token
+            token: token,
         });
     } catch (error) {
         console.error(error);
@@ -100,8 +110,8 @@ export const getUser = async (req, res) => {
         const user = req.user;
         return res.json({
             success: true,
-            user
-        })
+            user,
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -109,38 +119,42 @@ export const getUser = async (req, res) => {
             message: "Server error. Please try again later.",
         });
     }
-}
+};
 
 export const getPublishedImages = async (req, res) => {
-  try {
-    const publishedImageMessages = await Chat.aggregate([
-      { $unwind: "$messages" },
-      {
-        $match: {
-          "messages.isImage": true,
-          "messages.isPublished": true,
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          imageUrl: "$messages.content",
-          username: "$username",
-          timestamp: "$messages.timestamp",
-        },
-      },
-      { $sort: { timestamp: -1 } }, // newest first
-    ]);
+    try {
+        const publishedImageMessages = await Chat.aggregate([
+            { 
+                $unwind: { path: "$messages", preserveNullAndEmptyArrays: true } 
+            },
+            {
+                $match: {
+                    "messages.isImage": true,
+                    "messages.isPublished": true,
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    imageUrl: "$messages.content",
+                    username: "$username",
+                    timestamp: "$messages.timestamp",
+                },
+            },
+            {
+                $sort: { timestamp: -1 }, // Newest first
+            },
+        ]);
 
-    res.json({
-      success: true,
-      images: publishedImageMessages,
-    });
-  } catch (error) {
-    console.error("Error in getPublishedImages:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error. Please try again later.",
-    });
-  }
+        res.json({
+            success: true,
+            images: publishedImageMessages,
+        });
+    } catch (error) {
+        console.error("Error in getPublishedImages:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error. Please try again later.",
+        });
+    }
 };
